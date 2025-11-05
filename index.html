@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ms-MY">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Klik & Belajar: Menyusun Nombor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{ --card-r: 1.25rem; }
+    html{ font-size:18px; }
+    body{
+      font-family: ui-rounded, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      /* (Latar belakang dari skrin anda) */
+      background: #f3f4f6;
+      color:#111827;
+      min-height:100vh;
+    }
+
+    /* Cards */
+    .card{ background:#fff; border-radius:var(--card-r); box-shadow:0 18px 40px rgba(2,6,23,.08); }
+    .pill-btn{
+      border-radius:9999px; font-weight:800; min-height:48px;
+      box-shadow:0 12px 28px rgba(2,6,23,.10);
+    }
+    .chip{ border-radius:var(--card-r); box-shadow:0 6px 16px rgba(2,6,23,.04); }
+
+    /* Info bar (Ikut skrin) */
+    #infoBar{
+      background:#fef9c3;
+      border-bottom: 4px solid #fde047; /* (Ikut skrin) */
+    }
+    
+    /* Butang Sebut (Ikut skrin) */
+    #speakBtn {
+      background: #fde047;
+      color: #713f12;
+      border-radius: 9999px;
+      font-weight: 900;
+      box-shadow: 0 4px 12px rgba(180, 132, 32, .25);
+      transition: all .2s ease;
+      height: 2.75rem; /* 44px */
+      width: 2.75rem; /* 44px */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #speakBtn:hover{ filter:brightness(1.05); }
+
+    /* Layout */
+    .section-pad{ padding: 1rem 1.5rem; }
+    .card-inner{ padding:1.5rem; }
+    @media (min-width:768px){ .section-pad{ padding:1.75rem; } .card-inner{ padding:2rem; } }
+
+    /* Visuals Aktiviti (Dari kod vibrant anda) */
+    .number-card{ transition: all .2s ease; cursor: pointer; }
+    .number-card:hover{ transform: translateY(-2px) scale(1.02); }
+
+    .dragging{ opacity:.5; transform: rotate(5deg) scale(.96); }
+
+    .drop-zone{
+      border:3px dashed #cbd5e1; background:#f8fafc; transition: all .2s ease; border-radius:var(--card-r);
+      min-height:100px;
+    }
+    .drop-zone.drag-over{ background:#eff6ff; border-color:#3b82f6; box-shadow: inset 0 0 0 3px rgba(59,130,246,.12); transform: translateY(-1px); }
+
+    /* Visual Hint */
+    @keyframes shake{ 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+    .shake{ animation:shake .35s ease-out; }
+
+    @keyframes pulse-hint {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.7); }
+      50% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(251, 146, 60, 0); }
+    }
+    .pulse-hint { animation: pulse-hint 1.5s ease-out 2; }
+
+    /* Visual Aktiviti (dari kod vibrant) */
+    .conveyor-belt{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; padding:10px; background:#eef2f7; border-radius:var(--card-r); min-height:80px; }
+    .bin{ padding:1rem; border-radius:var(--card-r); text-align:center; }
+    .bin-blue{ border:4px solid #3b82f6; background:#eff6ff; }
+    .bin-green{ border:4px solid #10b981; background:#f0fdfa; }
+
+    .stone-path{ display:flex; flex-wrap:wrap; justify-content:center; gap:10px; }
+    .stone-drop-zone{ width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:800; border:3px dashed #a855f7; background:#f5f3ff; color:#6b21a8; }
+    .stone-drop-zone.filled{ border-style:solid; background:#ede9fe; }
+
+    .rocket-path{ display:flex; flex-direction:column; align-items:center; gap:8px; }
+    .rocket-station{
+      width:110px; height:50px; border:2px dashed #fb923c; background:#fff7ed; color:#fb923c; font-weight:900; border-radius:var(--card-r);
+      transition: all .2s ease;
+    }
+    .rocket-station:hover{ filter:brightness(1.03); transform: translateY(-1px); }
+    .rocket-station.completed{ background:#fb923c; color:#fff; border-style:solid; }
+    #rocket{ font-size:3rem; transition: transform .5s ease-out; position:relative; bottom:0; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-7xl mx-auto px-4 pt-4">
+    <div id="infoBar" class="p-3 md:p-4 flex items-center justify-between rounded-xl shadow-md">
+      <div class="flex items-center gap-3">
+        <span class="text-xl">📘</span>
+        <span id="infoText" class="text-base md:text-lg font-bold text-gray-800">
+          Pilih aktiviti untuk mula belajar.
+        </span>
+      </div>
+      <button id="speakBtn" class="text-xl">🔊</button>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto section-pad">
+    
+    <div id="welcomeCard" class="card card-inner mb-6 text-center">
+      <div class="text-gray-400 text-sm font-bold bg-gray-100 rounded-md p-2 inline-block leading-none">
+        12 <span class="block">34</span>
+      </div>
+      <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 my-4">
+        Kemahiran Pemulihan: Menyusun Nombor 1–100
+      </h1>
+      <p class="text-lg text-gray-600 mb-4">
+        Pilih aktiviti di bawah untuk meneroka susunan nombor secara santai.
+      </p>
+      <div class="text-4xl">👇</div>
+    </div>
+
+    <div class="card card-inner mb-6">
+      <div id="activityCard">
+        
+        <div id="activitySelector" class="text-center">
+          <h2 class="text-2xl md:text-3xl font-extrabold text-gray-900 mb-6">Pilih Aktiviti</h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <button onclick="loadActivity(1)" class="block w-full text-white font-bold py-4 px-2 rounded-xl shadow-lg transition hover:scale-105 hover:brightness-110 bg-blue-500">
+              🤖 Asing Nombor Genap
+            </button>
+            <button onclick="loadActivity(2)" class="block w-full text-white font-bold py-4 px-2 rounded-xl shadow-lg transition hover:scale-105 hover:brightness-110 bg-green-500">
+              👹 Asing Nombor Ganjil
+            </button>
+             <button onclick="loadActivity(3)" class="block w-full text-white font-bold py-4 px-2 rounded-xl shadow-lg transition hover:scale-105 hover:brightness-110 bg-purple-500">
+              🌸 Lima-Lima
+            </button>
+            <button onclick="loadActivity(4)" class="block w-full text-white font-bold py-4 px-2 rounded-xl shadow-lg transition hover:scale-105 hover:brightness-110 bg-orange-500">
+              🚀 Sepuluh-Sepuluh
+            </button>
+            <button onclick="loadActivity(5)" class="block w-full text-white font-bold py-4 px-2 rounded-xl shadow-lg transition hover:scale-105 hover:brightness-110 bg-pink-500">
+              🎲 Teroka Urutan
+            </button>
+          </div>
+          
+          <div class="flex justify-center gap-4 border-t pt-6 mt-6 border-gray-100">
+            <button onclick="clearActivityFromMenu()" class="text-white font-bold py-3 px-6 rounded-xl shadow-lg transition hover:brightness-110 bg-gray-500">🧹 Bersih</button>
+            <button onclick="nextActivity()" class="text-white font-bold py-3 px-6 rounded-xl shadow-lg transition hover:brightness-110 bg-indigo-500">➡️ Seterusnya</button>
+          </div>
+        </div>
+
+        <div id="activityContent" class="hidden"></div>
+      </div>
+    </div>
+
+    <div id="activityControls" class="hidden flex justify-center gap-3">
+      <button onclick="showActivitySelector()" class="pill-btn bg-gray-600 hover:bg-gray-700 text-white px-6">← Kembali</button>
+      <button onclick="clearActivity()" class="pill-btn bg-rose-600 hover:bg-rose-700 text-white px-6">🔄 Ulang Semula</button>
+    </div>
+  </main>
+
+  <script>
+    let currentActivity = 0;
+    let ttsEnabled = false;
+    let g_draggedElement = null;
+    let g_currentStep = 0;
+
+    const setInfo = (t)=>document.getElementById('infoText').textContent=t;
+    function speak(text){
+      if(!ttsEnabled) return;
+      if(!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang='ms-MY'; u.rate=.9; u.pitch=1.05;
+      const vs = window.speechSynthesis.getVoices();
+      const ms = vs.find(v=>v.lang==='ms-MY'|| (v.lang && v.lang.startsWith('ms')));
+      if(ms) u.voice=ms;
+      setTimeout(()=>window.speechSynthesis.speak(u),100);
+    }
+    document.getElementById('speakBtn').addEventListener('click', ()=>{ ttsEnabled=true; speak(document.getElementById('infoText').textContent); });
+
+    // === (DIUBAH SUAI) Navigasi untuk susun atur 2 kad ===
+    function showActivitySelector(){
+      document.getElementById('welcomeCard').classList.remove('hidden');    // Tunjuk kad welcome
+      document.getElementById('activitySelector').classList.remove('hidden'); // Tunjuk pemilih aktiviti
+      document.getElementById('activityContent').classList.add('hidden');     // Sembunyi konten aktiviti
+      document.getElementById('activityControls').classList.add('hidden');    // Sembunyi butang kawalan (bawah)
+      setInfo('Pilih aktiviti untuk mula belajar.');
+      currentActivity=0;
+    }
+    
+    function loadActivity(n){
+      currentActivity=n;
+      document.getElementById('welcomeCard').classList.add('hidden');       // Sembunyi kad welcome
+      document.getElementById('activitySelector').classList.add('hidden');    // Sembunyi pemilih aktiviti
+      document.getElementById('activityContent').classList.remove('hidden');  // Tunjuk konten aktiviti
+      document.getElementById('activityControls').classList.remove('hidden'); // Tunjuk butang kawalan (bawah)
+      
+      // (Logik aktiviti yang telah dibaiki)
+      if(n===1) return loadNumberSorter('genap');
+      if(n===2) return loadNumberSorter('ganjil');
+      if(n===3) return loadFivePattern();
+      if(n===4) return loadTenPattern();
+      if(n===5) return loadSequenceExplore();
+    }
+    
+    // (DIUBAH SUAI) Fungsi butang
+    function clearActivity(){ 
+      // Ini butang "Ulang Semula" di bawah
+      if(currentActivity>0) loadActivity(currentActivity); 
+    }
+    function clearActivityFromMenu() {
+      // Ini butang "Bersih" di menu utama
+      // Ia tidak buat apa-apa jika sudah di menu utama
+      if(currentActivity === 0) {
+        speak("Skrin telah bersih.");
+      } else {
+        showActivitySelector(); // Jika dalam aktiviti, kembali ke menu
+      }
+    }
+    function nextActivity(){ 
+      // Ini butang "Seterusnya"
+      const next=currentActivity<5 ? (currentActivity === 0 ? 1 : currentActivity+1) : 1; 
+      loadActivity(next); 
+    }
+
+    // Drag & Drop helpers
+    function dragStart(e){ g_draggedElement=e.target; e.dataTransfer.setData('text/plain', e.target.dataset.number); setTimeout(()=>e.target.classList.add('dragging'),0); }
+    function dragEnd(){ g_draggedElement=null; document.querySelectorAll('.dragging').forEach(el=>el.classList.remove('dragging')); document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over')); }
+    function dragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+    function dragLeave(e){ e.currentTarget.classList.remove('drag-over'); }
+
+    // === (DIBAIKI) Aktiviti 1 & 2: Pengasing Genap/Ganjil ===
+    function loadNumberSorter(type){
+      const numbers=[2,5,8,11,14,17,20,23].sort(()=>Math.random()-0.5);
+      const title = type==='genap' ? "🤖 Asing Nombor Genap" : "👹 Asing Nombor Ganjil";
+      const info  = `Tugas anda mengasingkan nombor-nombor. Seret nombor ke bakul yang betul.`;
+      setInfo(info);
+
+      document.getElementById('activityContent').innerHTML = `
+        <h3 class="text-2xl md:text-3xl font-extrabold text-center mb-6 ${type==='genap'?'text-blue-800':'text-green-800'}">${title}</h3>
+        <p class="text-center text-gray-600 mb-2">Ambil nombor dari sini:</p>
+        <div id="conveyor-belt" class="conveyor-belt mb-6"
+             ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOnConveyor(event)">
+          ${numbers.map(n=>`
+            <div draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)"
+                 class="chip number-card bg-white border-2 border-gray-300 rounded-xl px-4 py-3 text-2xl font-bold text-gray-800 cursor-move min-w-[60px] text-center"
+                 data-number="${n}">${n}</div>
+          `).join('')}
+        </div>
+        <p class="text-center text-gray-600 mb-2">Letak nombor di sini:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div id="bin-genap" class="bin bin-blue drop-zone flex flex-col items-center gap-1 py-5"
+               ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOnBin(event,'genap')">
+            <span class="text-6xl">🤖</span>
+            <div class="text-xl font-black uppercase text-blue-700">GENAP</div>
+          </div>
+          <div id="bin-ganjil" class="bin bin-green drop-zone flex flex-col items-center gap-1 py-5"
+               ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOnBin(event,'ganjil')">
+            <span class="text-6xl">👹</span>
+            <div class="text-xl font-black uppercase text-green-700">GANJIL</div>
+          </div>
+        </div>
+      `;
+    }
+    function dropOnBin(e,type){
+      e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+      if(!g_draggedElement) return;
+      const num=Number(g_draggedElement.dataset.number);
+      const even = num%2===0;
+      const ok = (type==='genap' && even) || (type==='ganjil' && !even);
+      document.querySelectorAll('.pulse-hint').forEach(el => el.classList.remove('pulse-hint'));
+      if(ok){
+        g_draggedElement.remove();
+        const msg=`Betul! ${num} ialah nombor ${type}.`; setInfo(msg); speak(msg);
+        if(document.getElementById('conveyor-belt').children.length===0){ setInfo("Syabas! Semua nombor telah diasingkan!"); speak("Syabas! Semua nombor telah diasingkan!"); }
+      }else{
+        const msg=`Oh! ${num} bukan nombor ${type}. Cuba lagi.`; setInfo(msg); speak(msg);
+        g_draggedElement.classList.add('shake');
+        const correctBinId = even ? 'bin-genap' : 'bin-ganjil';
+        const correctBin = document.getElementById(correctBinId);
+        if (correctBin) {
+          correctBin.classList.add('pulse-hint');
+          setTimeout(() => correctBin.classList.remove('pulse-hint'), 3000); 
+        }
+        setTimeout(()=>g_draggedElement.classList.remove('shake'),350);
+      }
+    }
+    function dropOnConveyor(e){ e.preventDefault(); e.currentTarget.classList.remove('drag-over'); if(g_draggedElement){ e.currentTarget.appendChild(g_draggedElement); } }
+
+    // === (DIBAIKI) Aktiviti 3: Lima-Lima (Dengan Hint) ===
+    function loadFivePattern(){
+      g_currentStep=5;
+      const numbers=[5,10,15,20,25];
+      const distract=[12,23,18];
+      const pool=[...numbers,...distract].sort(()=>Math.random()-0.5);
+      setInfo('Seret nombor gandaan lima ke atas batu ikut urutan. Mula dengan 5.');
+
+      document.getElementById('activityContent').innerHTML=`
+        <h3 class="text-2xl md:text-3xl font-extrabold text-center mb-6 text-purple-800">🌸 Lompat Atas Bunga</h3>
+        <p class="text-center text-gray-600 mb-3">Seret nombor ke atas batu ikut urutan.</p>
+        <div id="numberSource" class="conveyor-belt mb-6"
+             ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOnConveyor(event)">
+          ${pool.map(n=>`
+            <div draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)"
+                 class="chip number-card bg-purple-50 border-2 border-purple-200 rounded-xl px-4 py-3 text-xl font-bold text-purple-800 cursor-move min-w-[60px] text-center"
+                 data-number="${n}">${n}</div>
+          `).join('')}
+        </div>
+        <div class="stone-path">
+          ${numbers.map(n=>`
+            <div class="stone-drop-zone drop-zone" data-correct="${n}"
+                 ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropOnStone(event)">?</div>
+          `).join('')}
+        </div>
+      `;
+    }
+    function dropOnStone(e){
+      e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+      if(!g_draggedElement) return;
+      document.querySelectorAll('.pulse-hint').forEach(el => el.classList.remove('pulse-hint'));
+      const num=Number(g_draggedElement.dataset.number);
+      const want=Number(e.currentTarget.dataset.correct);
+      if(num===want && num===g_currentStep){
+        e.currentTarget.textContent=num; e.currentTarget.classList.add('filled'); e.currentTarget.removeAttribute('ondrop'); g_draggedElement.remove();
+        g_currentStep+=5;
+        if(g_currentStep>25){ setInfo("Syabas! Anda telah melengkapkan laluan!"); speak("Syabas! Anda telah melengkapkan laluan!"); }
+        else { setInfo(`Betul! Sekarang cari nombor ${g_currentStep}.`); speak(`Sekarang cari nombor ${g_currentStep}.`); }
+      }else if(num===want){
+        setInfo(`Belum lagi. Cari nombor ${g_currentStep} dahulu.`); speak(`Cari nombor ${g_currentStep} dahulu.`);
+        const correctStone = document.querySelector(`.stone-drop-zone[data-correct="${g_currentStep}"]`);
+        if (correctStone) {
+          correctStone.classList.add('pulse-hint');
+          setTimeout(() => correctStone.classList.remove('pulse-hint'), 3000);
+        }
+        g_draggedElement.classList.add('shake'); setTimeout(()=>g_draggedElement.classList.remove('shake'),350);
+      }else{
+        setInfo(`Oh! ${num} bukan di situ. Cuba lagi.`); speak("Cuba lagi.");
+        g_draggedElement.classList.add('shake'); setTimeout(()=>g_draggedElement.classList.remove('shake'),350);
+      }
+    }
+
+    // === (DIBAIKI) Aktiviti 4: Roket (Dengan Hint & Bug Dibaiki) ===
+    function loadTenPattern(){
+      g_currentStep=10;
+      const nums=[10,20,30,40,50,60,70,80,90,100];
+      setInfo('Klik stesen 10, 20, 30… ikut urutan untuk bantu roket.');
+
+      // (DIBAIKI) HTML untuk stesen 100
+      document.getElementById('activityContent').innerHTML=`
+        <h3 class="text-2xl md:text-3xl font-extrabold text-center mb-6 text-orange-800">🚀 Roket ke Bulan</h3>
+        <p class="text-center text-gray-600 mb-3">Klik stesen dari bawah ke atas (10 hingga 100).</p>
+        <div class="rocket-path">
+          <button class="rocket-station flex items-center justify-center gap-2" data-num="100" onclick="clickStation(100)">
+            <span class="text-3xl">🌕</span>
+            <span>100</span>
+          </button>
+          
+          ${[...nums].reverse().slice(1).map(n=>`
+            <button class="rocket-station" data-num="${n}" onclick="clickStation(${n})">${n}</button>
+          `).join('')}
+          
+          <div id="rocket">🚀</div>
+        </div>
+      `;
+      
+      // (DIBAIKI) Padam kod lama yang mengubah div bulan
+      // const moon=document.querySelector('.rocket-path .text-5xl');
+      // moon.classList.add('rocket-station','cursor-pointer'); moon.dataset.num=100; moon.onclick=()=>clickStation(100);
+    }
+    
+    function clickStation(num){
+      const btn=document.querySelector(`.rocket-station[data-num="${num}"]`);
+      if(!btn) return;
+      document.querySelectorAll('.pulse-hint').forEach(el => el.classList.remove('pulse-hint'));
+      
+      if(num===g_currentStep){
+        btn.classList.add('completed'); btn.onclick=null;
+        const rocket=document.getElementById('rocket');
+        
+        // === (DIBAIKI) PEMBETULAN BUG LOMPAT ===
+        const stepsToTake = g_currentStep / 10;
+        const translate = stepsToTake * -58; // 58px = ~saiz 1 stesen + gap
+        // === AKHIR PEMBETULAN ===
+        
+        rocket.style.transform=`translateY(${translate}px)`;
+        g_currentStep+=10;
+        
+        if(g_currentStep>100){ setInfo("Berjaya! Roket mendarat di bulan!"); speak("Berjaya! Roket mendarat di bulan!"); }
+        else{ setInfo(`Stesen ${num} diaktifkan! Seterusnya: ${g_currentStep}.`); speak(`Seterusnya ${g_currentStep}.`); }
+      
+      }else if(num>g_currentStep){
+        setInfo(`Terlalu jauh! Klik ${g_currentStep} dahulu.`); speak(`Klik ${g_currentStep} dahulu.`);
+        const correctStation = document.querySelector(`.rocket-station[data-num="${g_currentStep}"]`);
+        if (correctStation) {
+          correctStation.classList.add('pulse-hint');
+          setTimeout(() => correctStation.classList.remove('pulse-hint'), 3000);
+        }
+        btn.classList.add('shake'); setTimeout(()=>btn.classList.remove('shake'),350);
+      
+      }else{
+        setInfo(`Itu stesen yang lepas. Cari ${g_currentStep}.`); speak(`Cari ${g_currentStep}.`);
+      }
+    }
+
+    // === (KEKAL) Aktiviti 5: Teroka Urutan ===
+    function loadSequenceExplore(){
+      setInfo('Klik kad untuk dengar penerangan. Tiada penilaian.');
+      const items=[
+        {sequence:"5, 10, ?, 20", number:15, info:"Selepas 10 datang 15 sebelum 20."},
+        {sequence:"2, 4, 6, ?", number:8, info:"Tambah 2 setiap kali; selepas 6 ialah 8."},
+        {sequence:"5, 10, 15, 20, ?", number:25, info:"Tambah 5 berulang kali; selepas 20 ialah 25."},
+        {sequence:"10, 20, 30, ?", number:40, info:"Tambah 10; nombor seterusnya ialah 40."}
+      ];
+      document.getElementById('activityContent').innerHTML=`
+        <h3 class="text-2xl md:text-3xl font-extrabold text-center mb-6 text-pink-800">🎲 Teroka Urutan</h3>
+        <p class="text-center text-gray-600 mb-3">Klik kad untuk penerangan.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          ${items.map(it=>`
+            <div class="card p-4">
+              <div class="text-center mb-3 text-pink-800 font-extrabold">${it.sequence}</div>
+              <button class="chip w-full bg-pink-50 border-2 border-pink-200 rounded-xl px-4 py-3 text-xl font-black text-pink-800 number-card">${it.number}</button>
+            </div>
+          `).join('')}
+        </div>
+        <div id="seqOut" class="mt-6 text-center text-lg font-semibold text-pink-900 min-h-[3rem]"></div>
+      `;
+      const names={1:'satu',2:'dua',3:'tiga',4:'empat',5:'lima',6:'enam',7:'tujuh',8:'lapan',9:'sembilan',10:'sepuluh',11:'sebelas',12:'dua belas',13:'tiga belas',14:'empat belas',15:'lima belas',16:'enam belas',17:'tujuh belas',18:'lapan belas',19:'sembilan belas',20:'dua puluh',25:'dua puluh lima',30:'tiga puluh',40:'empat puluh',50:'lima puluh',60:'enam puluh',70:'tujuh puluh',80:'lapan puluh',90:'sembilan puluh',100:'seratus'};
+      document.querySelectorAll('#activityContent button').forEach((btn,i)=>{
+        btn.onclick=()=>{
+          const it=items[i];
+          const msg=`${it.info} Sebutan: ${names[it.number]||it.number}.`;
+          document.getElementById('seqOut').textContent=msg; setInfo(msg); speak(msg);
+        };
+      });
+    }
+
+    // Init
+    showActivitySelector();
+
+    if('speechSynthesis' in window){
+      setInterval(()=>{ if(window.speechSynthesis.paused) window.speechSynthesis.resume(); },1000);
+    }
+  </script>
+</body>
+</html>

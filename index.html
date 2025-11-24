@@ -3,18 +3,19 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pemulihan: Nombor & Urutan</title>
+  <title>Pemulihan: Menyusun Nombor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
-    /* --- UI STYLE (MASTER REFERENCE - KEKAL) --- */
+    /* --- UI STYLE (MASTER REFERENCE - TEMA HIJAU) --- */
     body { 
         font-family: 'Fredoka', sans-serif; 
         background-color: #f0fdf4; 
         background-image: radial-gradient(#86efac 2px, transparent 2px); 
         background-size: 30px 30px; 
+        user-select: none;
     }
     
     .game-card { 
@@ -38,7 +39,9 @@
         border-color: rgba(0,0,0,0.2); 
         transform: translateY(0); 
         cursor: pointer; 
-        display: inline-block; 
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
     .btn-3d:active:not(:disabled) { transform: translateY(4px); border-bottom-width: 2px; box-shadow: none; }
     .btn-3d:disabled { opacity: 0.6; cursor: not-allowed; border-bottom-width: 6px; filter: grayscale(100%); }
@@ -47,53 +50,26 @@
     .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
     
-    /* Drag & Drop Generik */
+    .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
+
+    /* Drag & Drop Zones */
     .draggable { cursor: grab; touch-action: none; }
-    .draggable:active { cursor: grabbing; opacity: 0.6; transform: scale(1.05); }
-    .drop-zone { transition: all 0.2s; border: 4px dashed #cbd5e1; background: #f8fafc; }
-    .drop-zone.drag-over { background: #dbeafe; border-color: #3b82f6; transform: scale(1.02); }
-
-    /* --- STYLE KHAS UNTUK AKTIVITI BARU (DIADAPTASI KE TEMA) --- */
-
-    /* 1. Timbang (Scale) */
-    .scale-wrap { display: flex; justify-content: center; align-items: flex-end; height: 200px; width: 100%; margin-bottom: 20px; }
-    .scale-arm { display: flex; justify-content: space-between; gap: 1rem; width: 80%; max-width: 500px; border-top: 12px solid #64748b; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); position: relative; }
-    .scale-pan { 
-        width: 120px; height: 100px; 
-        display: flex; align-items: center; justify-content: center; 
-        border: 4px solid rgba(0,0,0,0.1); 
-        border-radius: 1rem; 
-        cursor: pointer; 
-        margin-top: -4px; /* Connect to arm */
-        box-shadow: 0 4px 0 rgba(0,0,0,0.1);
-    }
-    .scale-left { background: #dbeafe; border-color: #3b82f6; color: #1e40af; }
-    .scale-right { background: #dcfce7; border-color: #22c55e; color: #15803d; }
-    .tip-left { transform: rotate(-15deg); }
-    .tip-right { transform: rotate(15deg); }
-    .pivot { width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-bottom: 40px solid #475569; margin: 0 auto; }
-
-    /* 2. Kereta (Ordinal) */
-    .car-btn { 
-        width: 80px; height: 80px; 
-        border-radius: 1rem; 
-        border: 3px solid #8b5cf6; 
-        background: #f5f3ff; 
-        display: flex; flex-direction: column; 
-        align-items: center; justify-content: center; 
-        transition: transform 0.2s; 
-    }
-    .car-btn:hover { transform: translateY(-5px); background: #ede9fe; }
-    .car-btn.pulse { animation: pulseRing 1.5s infinite; border-color: #f59e0b; }
-    @keyframes pulseRing { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
-
-    /* 3. Laluan Nombor */
-    .path-slot.hint::after { content: attr(data-correct); opacity: 0.3; font-size: 1.5rem; font-weight: bold; color: #94a3b8; position: absolute; }
+    .draggable:active { cursor: grabbing; opacity: 0.8; transform: scale(1.05); }
     
-    /* 4. Token Sebutan */
-    .token-btn { border-bottom-width: 4px; }
-    .token-btn.used { opacity: 0.4; filter: grayscale(100%); pointer-events: none; }
+    .drop-zone { transition: all 0.2s; border: 4px dashed #cbd5e1; background: #f8fafc; border-radius: 1rem; }
+    .drop-zone.drag-over { background: #dbeafe; border-color: #3b82f6; transform: scale(1.02); }
+    
+    /* Custom for Rocket */
+    .rocket-path { position: relative; width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 4px; align-items: center; }
+    .rocket-station { width: 100%; padding: 10px; border-radius: 10px; background: #fef3c7; border: 3px solid #fcd34d; text-align: center; font-weight: bold; color: #b45309; cursor: pointer; transition: all 0.2s; }
+    .rocket-station:active { transform: scale(0.95); }
+    .rocket-station.completed { background: #fcd34d; color: white; border-color: #d97706; }
+    #rocket-ship { transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
+    /* Custom for Stones */
+    .stone { width: 70px; height: 70px; border-radius: 50%; background: #f3e8ff; border: 3px dashed #c084fc; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #7e22ce; }
+    .stone.filled { background: #d8b4fe; border-style: solid; color: white; }
   </style>
 </head>
 <body class="min-h-screen text-slate-800 pb-10">
@@ -102,7 +78,7 @@
     <div class="max-w-4xl mx-auto bg-green-400 border-4 border-green-600 rounded-full px-6 py-3 shadow-xl flex items-center justify-between pointer-events-auto transform hover:scale-[1.01] transition-transform">
       <div class="flex items-center gap-3">
         <span class="text-3xl animate-bounce">🔢</span>
-        <span id="info-text" class="text-xl font-bold text-green-900 leading-none mt-1">Belajar Nombor</span>
+        <span id="info-text" class="text-xl font-bold text-green-900 leading-none mt-1">Menyusun Nombor</span>
       </div>
       <button id="speak-btn" onclick="speakInfo()" class="bg-white hover:bg-green-50 text-green-600 border-2 border-green-200 rounded-full p-2 transition-colors shadow-sm">🔊</button>
     </div>
@@ -112,11 +88,11 @@
   <div class="max-w-6xl mx-auto p-4">
     
     <div class="game-card p-8 mb-8">
-        <div id="activity-content" class="w-full relative z-10 flex flex-col items-center justify-center h-full transition-opacity duration-200">
+        <div id="activity-content" class="w-full relative z-10 flex flex-col items-center justify-center h-full transition-opacity duration-200 min-h-[500px]">
             <div class="py-10 text-center">
-                <div class="text-8xl mb-6 animate-pulse">📊</div>
-                <h2 class="text-5xl font-bold text-emerald-600 mb-4">Nombor & Urutan</h2>
-                <p class="text-2xl text-slate-500 mb-8 font-semibold">Belajar banding, susun, dan sebut.</p>
+                <div class="text-8xl mb-6 animate-pulse">🤖</div>
+                <h2 class="text-5xl font-bold text-emerald-600 mb-4">Jom Susun Nombor!</h2>
+                <p class="text-2xl text-slate-500 mb-8 font-semibold">Pilih aktiviti di bawah untuk mula.</p>
                 <div class="text-4xl animate-bounce">👇</div>
             </div>
         </div>
@@ -126,11 +102,11 @@
       <h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">🎮 Pilih Aktiviti</h3>
       
       <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-        <button onclick="loadActivity(1)" class="btn-3d bg-blue-500 text-white font-bold py-4 px-2 rounded-xl text-lg">⚖️ Banding</button>
-        <button onclick="loadActivity(2)" class="btn-3d bg-green-500 text-white font-bold py-4 px-2 rounded-xl text-lg">📏 Susun</button>
-        <button onclick="loadActivity(3)" class="btn-3d bg-purple-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🏎️ Kedudukan</button>
-        <button onclick="loadActivity(4)" class="btn-3d bg-orange-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🧭 Garis No.</button>
-        <button onclick="loadActivity(5)" class="btn-3d bg-pink-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🗣️ Sebutan</button>
+        <button onclick="loadActivity(1)" class="btn-3d bg-blue-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🤖 Genap</button>
+        <button onclick="loadActivity(2)" class="btn-3d bg-green-500 text-white font-bold py-4 px-2 rounded-xl text-lg">👹 Ganjil</button>
+        <button onclick="loadActivity(3)" class="btn-3d bg-purple-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🌸 Lima-Lima</button>
+        <button onclick="loadActivity(4)" class="btn-3d bg-orange-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🚀 Roket</button>
+        <button onclick="loadActivity(5)" class="btn-3d bg-pink-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🎲 Teroka</button>
       </div>
 
       <div class="flex justify-center gap-4 border-t-2 border-slate-100 pt-6">
@@ -141,10 +117,11 @@
   </div>
 
   <script>
-    /* --- STANDARD HELPERS (MASTER REFERENCE) --- */
+    /* --- STANDARD HELPERS --- */
     let currentActivity = 0;
     let ttsEnabled = false;
-    let currentInfo = "Pilih aktiviti untuk mula belajar!";
+    let currentInfo = "Pilih aktiviti untuk mula belajar nombor!";
+    let draggedItem = null;
     
     function speak(text) { 
         if (!ttsEnabled || !('speechSynthesis' in window)) return; 
@@ -167,313 +144,270 @@
 
     function triggerWin() { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
 
+    /* --- DnD Globals --- */
+    window.dragStart = function(e) { draggedItem = e.target; e.target.classList.add('opacity-50'); e.dataTransfer.setData('val', e.target.dataset.val); }
+    window.dragEnd = function(e) { e.target.classList.remove('opacity-50'); draggedItem = null; }
+    window.allowDrop = function(e) { e.preventDefault(); if (e.currentTarget.classList.contains('drop-zone')) e.currentTarget.classList.add('drag-over'); }
+    window.dragLeave = function(e) { if (e.currentTarget.classList.contains('drop-zone')) e.currentTarget.classList.remove('drag-over'); }
+
     /* --- ROUTER --- */
     function loadActivity(n) {
       currentActivity = n;
       const content = document.getElementById('activity-content');
       content.style.opacity = 0;
       setTimeout(() => {
-          if (n === 1) setupCompare(content);
-          else if (n === 2) setupSort(content);
-          else if (n === 3) setupOrdinal(content);
-          else if (n === 4) setupNumberLine(content);
-          else if (n === 5) setupPronounce(content);
+          if (n === 1) setupSorter(content, 'genap');
+          else if (n === 2) setupSorter(content, 'ganjil');
+          else if (n === 3) setupFivePattern(content);
+          else if (n === 4) setupRocket(content);
+          else if (n === 5) setupExplore(content);
           content.style.opacity = 1; 
       }, 200);
     }
 
     function clearActivity() {
         currentActivity = 0;
-        document.getElementById('activity-content').innerHTML = `<div class="py-10 text-center"><div class="text-8xl mb-6 animate-pulse">📊</div><h2 class="text-5xl font-bold text-emerald-600 mb-4">Nombor & Urutan</h2><p class="text-2xl text-slate-500 mb-8 font-semibold">Pilih butang di bawah.</p></div>`;
+        document.getElementById('activity-content').innerHTML = `<div class="py-10 text-center"><div class="text-8xl mb-6 animate-pulse">🤖</div><h2 class="text-5xl font-bold text-emerald-600 mb-4">Jom Susun Nombor!</h2><p class="text-2xl text-slate-500 mb-8 font-semibold">Pilih butang di bawah.</p></div>`;
         setInfo("Pilih aktiviti di bawah.");
     }
     function nextActivity() { let next = currentActivity + 1; if (next > 5) next = 1; loadActivity(next); }
 
 
     /* =========================================
-       LOGIK AKTIVITI (DIADAPTASI DARI INPUT BARU)
+       LOGIK AKTIVITI
        ========================================= */
 
-    /* --- 1. BANDINGKAN (Scale) --- */
-    function setupCompare(content) {
-        const pair = [ {a:22,b:24,task:'lebih banyak'}, {a:35,b:32,task:'lebih banyak'}, {a:17,b:19,task:'lebih kurang'}, {a:40,b:39,task:'lebih kurang'} ][Math.floor(Math.random()*4)];
-        setInfo(`Pilih nombor yang ${pair.task}.`);
+    /* --- 1 & 2. Asing Nombor (Genap / Ganjil) --- */
+    function setupSorter(content, type) {
+        const isEven = type === 'genap';
+        const title = isEven ? "🤖 Asing Nombor Genap" : "👹 Asing Nombor Ganjil";
+        const color = isEven ? "blue" : "green";
+        const numbers = [2,5,8,11,14,17,20,23].sort(()=>Math.random()-0.5);
         
-        const bigger = (pair.a > pair.b) ? 'a' : 'b';
-        const tiltClass = (bigger === 'a') ? 'tip-left' : 'tip-right';
-        
-        // Trigger animation after render
-        setTimeout(() => { 
-            const arm = document.getElementById('scale-arm');
-            if(arm) arm.classList.add(tiltClass);
-        }, 100);
+        setInfo(`Masukkan nombor ${type.toUpperCase()} ke dalam bakul.`);
 
         content.innerHTML = `
-            <div class="w-full max-w-4xl text-center">
-                <h3 class="text-3xl font-bold text-blue-600 mb-2">⚖️ Bandingkan</h3>
-                <p class="text-xl text-slate-500 mb-8">Soalan: Mana yang <b>${pair.task}</b>?</p>
+            <div class="w-full max-w-5xl text-center">
+                <h3 class="text-3xl font-bold text-${color}-600 mb-6">${title}</h3>
                 
-                <div class="flex flex-col items-center justify-center">
-                    <div class="scale-wrap">
-                        <div id="scale-arm" class="scale-arm">
-                            <button onclick="checkCompare(${pair.a}, '${pair.task}', ${pair.a > pair.b})" class="scale-pan scale-left btn-3d">
-                                <span class="text-4xl font-black">${pair.a}</span>
-                            </button>
-                            <button onclick="checkCompare(${pair.b}, '${pair.task}', ${pair.b > pair.a})" class="scale-pan scale-right btn-3d">
-                                <span class="text-4xl font-black">${pair.b}</span>
-                            </button>
+                <div id="conveyor" class="bg-slate-100 p-4 rounded-2xl border-2 border-slate-200 flex flex-wrap justify-center gap-4 mb-10 min-h-[100px]">
+                    ${numbers.map(n => `
+                        <div draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-val="${n}"
+                             class="draggable btn-3d bg-white border-slate-300 text-slate-700 w-16 h-16 rounded-xl flex items-center justify-center text-2xl font-bold">
+                            ${n}
                         </div>
-                    </div>
-                    <div class="pivot"></div>
+                    `).join('')}
                 </div>
-                <div class="mt-8">
-                    <button onclick="loadActivity(1)" class="btn-3d bg-slate-400 text-white py-2 px-6 rounded-lg">Soalan Baru 🔄</button>
+                
+                
+
+[Image of sorting bins]
+
+
+                <div class="grid grid-cols-2 gap-8">
+                    <div class="drop-zone min-h-[250px] flex flex-col items-center justify-center gap-2 bg-blue-50 border-blue-300"
+                         ondrop="dropSorter(event, 'genap')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                        <span class="text-6xl">🤖</span>
+                        <span class="text-xl font-black text-blue-700 uppercase">Genap</span>
+                    </div>
+                    <div class="drop-zone min-h-[250px] flex flex-col items-center justify-center gap-2 bg-green-50 border-green-300"
+                         ondrop="dropSorter(event, 'ganjil')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
+                        <span class="text-6xl">👹</span>
+                        <span class="text-xl font-black text-green-700 uppercase">Ganjil</span>
+                    </div>
                 </div>
             </div>
         `;
     }
-    window.checkCompare = function(val, task, isCorrectLogic) {
-        // Logic: if task is 'lebih banyak', logic is correct. If 'lebih kurang', logic is inverted.
-        let correct = false;
-        if (task === 'lebih banyak' && isCorrectLogic) correct = true;
-        if (task === 'lebih kurang' && !isCorrectLogic) correct = true; // Selected smaller one
 
-        if(correct) {
-            speak(`Betul! ${val} ialah jawapannya.`);
-            setInfo("Jawapan Tepat!");
-            triggerWin();
+    window.dropSorter = function(e, binType) {
+        e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+        if(!draggedItem) return;
+        
+        const val = parseInt(draggedItem.dataset.val);
+        const isNumEven = val % 2 === 0;
+        const isCorrect = (binType === 'genap' && isNumEven) || (binType === 'ganjil' && !isNumEven);
+
+        if(isCorrect) {
+            draggedItem.style.display = 'none';
+            speak(`Betul! ${val} ialah ${binType}.`);
+            
+            // Visual feedback in bin
+            const chip = document.createElement('div');
+            chip.className = "w-12 h-12 bg-white rounded-full border-2 flex items-center justify-center font-bold text-sm pop-in mb-1";
+            chip.innerText = val;
+            chip.style.borderColor = binType === 'genap' ? '#3b82f6' : '#22c55e';
+            e.currentTarget.appendChild(chip);
+
+            if(document.querySelectorAll('#conveyor .draggable:not([style*="none"])').length === 0) {
+                setTimeout(()=>{ speak("Semua nombor selesai!"); triggerWin(); }, 500);
+            }
         } else {
-            speak("Cuba lagi.");
-            setInfo("Salah. Perhatikan penimbang.");
+            speak(`Salah. ${val} bukan ${binType}.`);
+            draggedItem.classList.add('shake');
+            setTimeout(()=>draggedItem.classList.remove('shake'), 500);
         }
     }
 
-    /* --- 2. SUSUN URUTAN (Sort) --- */
-    let draggedItem = null;
-    function setupSort(content) {
-        setInfo("Susun nombor ikut urutan menaik.");
-        const nums = [14, 18, 12, 16].sort(() => Math.random() - 0.5);
+    /* --- 3. Lima-Lima (Stones) --- */
+    let patternState = { next: 5 };
+    
+    function setupFivePattern(content) {
+        patternState = { next: 5 };
+        const targets = [5, 10, 15, 20, 25];
+        const distractors = [12, 18, 23];
+        const pool = [...targets, ...distractors].sort(()=>Math.random()-0.5);
         
+        setInfo("Susun gandaan 5 ikut urutan (5, 10, 15...).");
+
         content.innerHTML = `
-            <div class="w-full max-w-4xl text-center">
-                <h3 class="text-3xl font-bold text-green-600 mb-6">📏 Susun Urutan (Menaik)</h3>
+            <div class="w-full max-w-5xl text-center">
+                <h3 class="text-3xl font-bold text-purple-600 mb-6">🌸 Lompat Atas Bunga (Gandaan 5)</h3>
                 
-                <div class="flex flex-wrap justify-center gap-4 mb-8 min-h-[100px]">
-                    ${nums.map(n => `
-                        <div draggable="true" ondragstart="dragStart(event)" data-val="${n}" 
-                             class="draggable btn-3d bg-green-100 text-green-800 border-green-300 w-20 h-20 rounded-xl text-3xl font-bold flex items-center justify-center">
+                <div class="bg-purple-50 p-4 rounded-2xl border-2 border-purple-200 flex flex-wrap justify-center gap-4 mb-10">
+                    ${pool.map(n => `
+                        <div draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-val="${n}"
+                             class="draggable btn-3d bg-white border-purple-300 text-purple-800 w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold">
                             ${n}
                         </div>
                     `).join('')}
                 </div>
 
-                <div class="flex justify-center gap-2 md:gap-4 mb-8">
-                     ${[0,1,2,3].map(i => `
-                        <div class="drop-zone w-20 h-20 md:w-24 md:h-24 rounded-xl flex items-center justify-center text-3xl font-bold text-slate-300" 
-                             ondrop="dropSort(event)" ondragover="allowDrop(event)">↘︎</div>
-                     `).join('')}
-                </div>
-
-                <div class="flex justify-center gap-4">
-                    <button onclick="showSortHint()" class="btn-3d bg-yellow-400 text-yellow-900 py-2 px-6 rounded-full font-bold">💡 Lihat Jawapan</button>
-                    <button onclick="loadActivity(2)" class="btn-3d bg-slate-400 text-white py-2 px-6 rounded-full font-bold">🔄 Semula</button>
-                </div>
-            </div>
-        `;
-    }
-    // Reuse standard DnD helpers
-    window.dragStart = function(e) {
-        e.dataTransfer.setData('text', e.target.dataset.val);
-        draggedItem = e.target;
-        setTimeout(() => e.target.style.opacity = '0.5', 0);
-    }
-    window.allowDrop = function(e) { e.preventDefault(); e.target.classList.add('drag-over'); }
-    // Fix drag leave visual
-    document.addEventListener('dragleave', (e) => { if(e.target.classList.contains('drop-zone')) e.target.classList.remove('drag-over'); });
-
-    window.dropSort = function(e) {
-        e.preventDefault();
-        e.target.classList.remove('drag-over');
-        const val = e.dataTransfer.getData('text');
-        
-        if (!e.target.classList.contains('drop-zone') || e.target.hasChildNodes()) return; // Simple validation
-        
-        // Create new element in drop zone
-        e.target.innerHTML = ''; // Clear arrow
-        e.target.innerText = val;
-        e.target.classList.add('bg-green-500', 'text-white', 'border-green-600');
-        e.target.classList.remove('text-slate-300');
-        
-        // Remove from bank
-        if(draggedItem) draggedItem.remove();
-        
-        speak(val);
-    }
-    window.showSortHint = function() {
-        setInfo("Urutan betul: 12, 14, 16, 18");
-        speak("Dua belas, empat belas, enam belas, lapan belas.");
-    }
-
-    /* --- 3. KEDUDUKAN (Ordinal) --- */
-    function setupOrdinal(content) {
-        setInfo("Klik kereta untuk dengar kedudukannya.");
-        const cars = ['🏎️','🚗','🚙','🚕','🚓','🚑','🚒','🚐','🚚','🚜'];
-        
-        content.innerHTML = `
-            <div class="w-full max-w-5xl text-center">
-                <h3 class="text-3xl font-bold text-purple-600 mb-6">🏎️ Kedudukan (11 - 20)</h3>
-                
-                <div id="car-row" class="flex flex-wrap justify-center gap-4 mb-8">
-                    ${Array.from({length:10}).map((_, i) => {
-                        const n = i + 11;
-                        return `
-                            <button onclick="clickCar(this, ${n})" class="car-btn btn-3d border-purple-300" data-n="${n}">
-                                <span class="text-3xl">${cars[i]}</span>
-                                <span class="text-xs font-bold text-purple-900 mt-1">${n}</span>
-                            </button>
-                        `;
-                    }).join('')}
-                </div>
-                
-                <div class="flex justify-center gap-4">
-                    <button onclick="highlightRandomCar()" class="btn-3d bg-indigo-500 text-white py-2 px-6 rounded-full font-bold">🎲 Teka Satu</button>
-                </div>
-            </div>
-        `;
-    }
-    window.clickCar = function(btn, n) {
-        const map = {11:'sebelas',12:'dua belas',13:'tiga belas',14:'empat belas',15:'lima belas',16:'enam belas',17:'tujuh belas',18:'lapan belas',19:'sembilan belas',20:'dua puluh'};
-        const text = (n===11) ? 'ke-sebelas' : (n===20 ? 'ke-dua puluh' : `ke-${map[n]}`);
-        speak(`Kedudukan ${text}`);
-        setInfo(`Kereta di kedudukan ${n} (${text}).`);
-        
-        // Visual feedback
-        document.querySelectorAll('.car-btn').forEach(c => c.classList.remove('bg-yellow-100', 'scale-110'));
-        btn.classList.add('bg-yellow-100', 'scale-110');
-    }
-    window.highlightRandomCar = function() {
-        document.querySelectorAll('.car-btn').forEach(c => c.classList.remove('pulse'));
-        const all = document.querySelectorAll('.car-btn');
-        const pick = all[Math.floor(Math.random() * all.length)];
-        pick.classList.add('pulse');
-        setInfo("Cari kereta yang berdenyut itu!");
-        speak("Cari kereta itu.");
-    }
-
-    /* --- 4. GARIS NOMBOR (Number Line) --- */
-    function setupNumberLine(content) {
-        setInfo("Seret nombor oren ke petak kosong.");
-        const puzzle = [30, 31, null, 33, null]; 
-        const correct = {2:32, 4:34};
-        const choices = [32, 34, 38].sort(()=>Math.random()-0.5);
-
-        content.innerHTML = `
-            <div class="w-full max-w-5xl text-center">
-                <h3 class="text-3xl font-bold text-orange-600 mb-6">🧭 Garis Nombor</h3>
-                
-                <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-10 bg-orange-50 p-6 rounded-2xl border-2 border-orange-200">
-                    ${puzzle.map((v, i) => v === null 
-                        ? `<div class="path-slot drop-zone w-20 h-20 rounded-xl flex items-center justify-center text-2xl font-bold relative hint" 
-                               data-correct="${correct[i]}" ondrop="dropLine(event)" ondragover="allowDrop(event)"></div>`
-                        : `<div class="w-20 h-20 rounded-xl flex items-center justify-center text-3xl font-bold bg-white border-2 border-slate-200 text-slate-600">${v}</div>`
-                    ).join('')}
-                </div>
-
-                <div class="flex flex-wrap justify-center gap-4">
-                    ${choices.map(n => `
-                        <div draggable="true" ondragstart="dragStart(event)" data-val="${n}"
-                             class="draggable btn-3d bg-orange-500 text-white w-20 h-20 rounded-xl text-3xl font-bold flex items-center justify-center">
-                            ${n}
-                        </div>
+                <div class="flex flex-wrap justify-center gap-4 md:gap-8 items-center relative">
+                    <div class="absolute top-1/2 left-0 right-0 h-2 bg-purple-200 -z-10 rounded-full"></div>
+                    ${targets.map(n => `
+                        <div class="stone drop-zone" data-target="${n}"
+                             ondrop="dropStone(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">?</div>
                     `).join('')}
                 </div>
-                 <div class="mt-8">
-                    <button onclick="loadActivity(4)" class="btn-3d bg-slate-400 text-white py-2 px-6 rounded-lg">Reset 🔄</button>
+            </div>
+        `;
+    }
+
+    window.dropStone = function(e, target) {
+        e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+        if(!draggedItem) return;
+        
+        const val = parseInt(draggedItem.dataset.val);
+        const targetVal = parseInt(e.currentTarget.dataset.target);
+
+        if(val === targetVal && val === patternState.next) {
+            e.currentTarget.innerHTML = val;
+            e.currentTarget.classList.remove('drop-zone');
+            e.currentTarget.classList.add('filled', 'pop-in');
+            e.currentTarget.removeAttribute('ondrop');
+            draggedItem.style.display = 'none';
+            
+            patternState.next += 5;
+            speak(val.toString());
+
+            if(val === 25) {
+                setTimeout(()=>{ speak("Laluan lengkap!"); triggerWin(); }, 500);
+            } else {
+                setInfo(`Cari nombor ${patternState.next}.`);
+            }
+        } else {
+            if(val !== targetVal) speak("Salah tempat.");
+            else speak(`Ikut urutan. Cari ${patternState.next} dulu.`);
+            
+            draggedItem.classList.add('shake');
+            setTimeout(()=>draggedItem.classList.remove('shake'), 500);
+        }
+    }
+
+    /* --- 4. Roket Sepuluh (Interactive Click) --- */
+    let rocketStep = 10;
+    
+    function setupRocket(content) {
+        rocketStep = 10;
+        const stations = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10]; // Render reversed visually
+        
+        setInfo("Klik stesen 10, 20, 30... untuk terbangkan roket!");
+
+        content.innerHTML = `
+            <div class="w-full max-w-md mx-auto text-center relative h-[600px]">
+                <h3 class="text-3xl font-bold text-orange-600 mb-4">🚀 Roket Sepuluh</h3>
+                
+                
+
+[Image of rocket launch pad]
+
+
+                <div class="rocket-path mx-auto bg-orange-50 p-4 rounded-3xl border-2 border-orange-200 h-full justify-end">
+                    ${stations.map(n => `
+                        <div class="rocket-station" id="st-${n}" onclick="clickStation(${n})">
+                            ${n === 100 ? '🌕 100' : n}
+                        </div>
+                    `).join('')}
+                    
+                    <div id="rocket-ship" class="text-6xl absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 transition-all duration-500">🚀</div>
                 </div>
             </div>
         `;
     }
-    window.dropLine = function(e) {
-        e.preventDefault();
-        e.target.classList.remove('drag-over');
-        const val = e.dataTransfer.getData('text');
-        const correctVal = e.target.dataset.correct;
 
-        if(val === correctVal) {
-            e.target.innerText = val;
-            e.target.classList.add('bg-orange-500', 'text-white');
-            e.target.classList.remove('hint'); // remove hint styling
-            speak(val);
-            triggerWin();
-        } else {
-            speak("Salah.");
-            e.target.classList.add('bg-red-200');
-            setTimeout(() => e.target.classList.remove('bg-red-200'), 500);
+    window.clickStation = function(val) {
+        if(val === rocketStep) {
+            const btn = document.getElementById(`st-${val}`);
+            btn.classList.add('completed');
+            
+            // Move Rocket
+            const rocket = document.getElementById('rocket-ship');
+            const stepHeight = 46; // Approximate height of station + gap
+            const stepsTaken = val / 10;
+            rocket.style.transform = `translate(-50%, -${stepsTaken * stepHeight}px)`;
+            
+            speak(val.toString());
+            rocketStep += 10;
+
+            if(val === 100) {
+                setInfo("Roket sampai ke bulan!");
+                triggerWin();
+                speak("Berjaya mendarat!");
+            }
+        } else if (val > rocketStep) {
+            speak(`Klik ${rocketStep} dahulu.`);
+            const btn = document.getElementById(`st-${val}`);
+            btn.classList.add('shake');
+            setTimeout(()=>btn.classList.remove('shake'), 300);
         }
     }
 
-    /* --- 5. BINA SEBUTAN (Pronounce) --- */
-    function setupPronounce(content) {
-        setInfo("Bina sebutan nombor.");
-        const n = (Math.random() < 0.15) ? 100 : (10 + Math.floor(Math.random() * 90));
-        const ONES = ["kosong","satu","dua","tiga","empat","lima","enam","tujuh","lapan","sembilan"];
-        
-        // Helper logic
-        let correctTokens = [];
-        if(n===100) correctTokens=["seratus"];
-        else if(n===10) correctTokens=["sepuluh"];
-        else if(n===11) correctTokens=["sebelas"];
-        else if(n>11 && n<20) correctTokens=[ONES[n-10],"belas"];
-        else {
-            const p=Math.floor(n/10), s=n%10;
-            if(s===0) correctTokens=[ONES[p],"puluh"];
-            else correctTokens=[ONES[p],"puluh",ONES[s]];
-        }
-
-        const bank = Array.from(new Set([...correctTokens, "puluh","belas","seratus", ...ONES])).slice(0,10).sort(()=>Math.random()-0.5);
+    /* --- 5. Teroka Urutan --- */
+    function setupExplore(content) {
+        setInfo("Klik kad untuk belajar pola nombor.");
+        const items = [
+            {seq:"5, 10, ?, 20", ans:15, desc:"Tambah 5 setiap langkah."},
+            {seq:"2, 4, 6, ?", ans:8, desc:"Nombor genap, tambah 2."},
+            {seq:"10, 20, 30, ?", ans:40, desc:"Gandaan sepuluh."},
+            {seq:"1, 3, 5, ?", ans:7, desc:"Nombor ganjil, selang satu."}
+        ];
 
         content.innerHTML = `
-            <div class="w-full max-w-4xl text-center">
-                <h3 class="text-3xl font-bold text-pink-600 mb-6">🗣️ Bina Sebutan</h3>
+            <div class="w-full max-w-5xl text-center">
+                <h3 class="text-3xl font-bold text-pink-600 mb-8">🎲 Teroka Urutan</h3>
                 
-                <div class="flex items-center justify-center gap-8 mb-8">
-                    <div class="bg-white border-4 border-pink-200 rounded-3xl p-8 shadow-sm">
-                        <div class="text-7xl font-black text-slate-700">${n}</div>
-                    </div>
-                    <div class="text-left hidden md:block">
-                        <div class="text-sm text-slate-400 font-bold uppercase">Contoh:</div>
-                        <div class="text-2xl font-bold text-green-600">${correctTokens.join(" ")}</div>
-                    </div>
-                </div>
-
-                <div id="say-result" class="min-h-[80px] bg-pink-50 border-2 border-pink-200 rounded-2xl p-4 flex flex-wrap justify-center gap-2 mb-6">
-                    <span class="text-slate-400 italic self-center text-sm">Klik perkataan di bawah...</span>
-                </div>
-
-                <div class="flex flex-wrap justify-center gap-3 mb-8">
-                    ${bank.map(w => `
-                        <button onclick="addToken(this, '${w}')" class="token-btn btn-3d bg-pink-100 text-pink-800 border-pink-300 py-2 px-4 rounded-lg font-bold text-lg">
-                            ${w}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    ${items.map(item => `
+                        <button onclick="explainSeq(this, '${item.desc}', ${item.ans})" class="btn-3d bg-white border-pink-300 text-slate-700 p-6 rounded-2xl flex flex-col items-center gap-3 group hover:bg-pink-50 w-full">
+                            <div class="text-2xl font-bold text-pink-800">${item.seq}</div>
+                            <div class="w-full h-1 bg-pink-100 rounded-full"></div>
+                            <div class="text-4xl font-black text-pink-500 group-hover:scale-110 transition-transform">?</div>
                         </button>
                     `).join('')}
                 </div>
-
-                <button onclick="loadActivity(5)" class="btn-3d bg-indigo-500 text-white py-3 px-8 rounded-full font-bold text-xl">Soalan Baru ➡️</button>
             </div>
         `;
     }
-    window.addToken = function(btn, w) {
-        const res = document.getElementById('say-result');
-        if(res.querySelector('.text-slate-400')) res.innerHTML = ''; // Clear placeholder
+
+    window.explainSeq = function(btn, desc, ans) {
+        // Reveal answer visually
+        const ansEl = btn.querySelector('.text-4xl');
+        ansEl.innerText = ans;
+        ansEl.classList.add('text-green-500', 'pop-in');
         
-        const chip = document.createElement('span');
-        chip.className = "bg-pink-500 text-white px-4 py-2 rounded-lg font-bold animate-pop";
-        chip.innerText = w;
-        res.appendChild(chip);
-        
-        btn.classList.add('used');
-        btn.disabled = true;
-        speak(w);
+        speak(`${ans}. ${desc}`);
+        setInfo(desc);
     }
 
   </script>

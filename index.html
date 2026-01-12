@@ -1,280 +1,404 @@
 <!DOCTYPE html>
-<html lang="ms-MY">
+<html lang="ms-MY" class="overflow-hidden overscroll-none">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pemulihan: Menyusun Nombor</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Pemulihan: Menyusun Nombor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
-  <style>
-    /* --- UI STYLE (MASTER REFERENCE - TEMA HIJAU) --- */
-    body { 
-        font-family: 'Fredoka', sans-serif; 
-        background-color: #f0fdf4; 
-        background-image: radial-gradient(#86efac 2px, transparent 2px); 
-        background-size: 30px 30px; 
-        user-select: none;
-    }
-    
-    .game-card { 
-        background: white; 
-        border: 4px solid #475569; 
-        box-shadow: 8px 8px 0px #00000020; 
-        border-radius: 1.5rem; 
-        min-height: 600px; 
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        overflow: hidden; 
-    }
-    
-    /* Buttons */
-    .btn-3d { 
-        transition: all 0.1s; 
-        border-bottom-width: 6px; 
-        border-color: rgba(0,0,0,0.2); 
-        transform: translateY(0); 
-        cursor: pointer; 
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .btn-3d:active:not(:disabled) { transform: translateY(4px); border-bottom-width: 2px; box-shadow: none; }
-    .btn-3d:disabled { opacity: 0.6; cursor: not-allowed; border-bottom-width: 6px; filter: grayscale(100%); }
+    <style>
+        /* --- UI STYLE (MASTER REFERENCE - TEMA HIJAU) --- */
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #f0fdf4;
+            background-image: radial-gradient(#86efac 2px, transparent 2px);
+            background-size: 30px 30px;
+            user-select: none;
+        }
 
-    /* Animations */
-    .pop-in { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-    
-    .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
-    @keyframes shake { 10%, 90% { transform: translate3d(-2px, 0, 0); } 20%, 80% { transform: translate3d(4px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 0, 0); } 40%, 60% { transform: translate3d(6px, 0, 0); } }
+        .game-card {
+            background: white;
+            border: 4px solid #475569;
+            box-shadow: 8px 8px 0px #00000020;
+            border-radius: 1.5rem;
+            /* min-height: 600px; REMOVED */
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-    /* Drag & Drop Zones */
-    .draggable { cursor: grab; touch-action: none; }
-    .draggable:active { cursor: grabbing; opacity: 0.8; transform: scale(1.05); }
-    
-    .drop-zone { transition: all 0.2s; border: 4px dashed #cbd5e1; background: #f8fafc; border-radius: 1rem; }
-    .drop-zone.drag-over { background: #dbeafe; border-color: #3b82f6; transform: scale(1.02); }
-    
-    /* Custom for Rocket */
-    .rocket-path { position: relative; width: 100%; max-width: 300px; display: flex; flex-direction: column; gap: 4px; align-items: center; }
-    .rocket-station { width: 100%; padding: 10px; border-radius: 10px; background: #fef3c7; border: 3px solid #fcd34d; text-align: center; font-weight: bold; color: #b45309; cursor: pointer; transition: all 0.2s; }
-    .rocket-station:active { transform: scale(0.95); }
-    .rocket-station.completed { background: #fcd34d; color: white; border-color: #d97706; }
-    #rocket-ship { transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        /* Buttons */
+        .btn-3d {
+            transition: all 0.1s;
+            border-bottom-width: 6px;
+            border-color: rgba(0, 0, 0, 0.2);
+            transform: translateY(0);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-    /* Custom for Stones */
-    .stone { width: 70px; height: 70px; border-radius: 50%; background: #f3e8ff; border: 3px dashed #c084fc; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #7e22ce; }
-    .stone.filled { background: #d8b4fe; border-style: solid; color: white; }
-  </style>
+        .btn-3d:active:not(:disabled) {
+            transform: translateY(4px);
+            border-bottom-width: 2px;
+            box-shadow: none;
+        }
+
+        .btn-3d:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            border-bottom-width: 6px;
+            filter: grayscale(100%);
+        }
+
+        /* Animations */
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-2px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(4px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-6px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(6px, 0, 0);
+            }
+        }
+
+        /* Drag & Drop Zones */
+        .draggable {
+            cursor: grab;
+            touch-action: none;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+
+        .drop-zone {
+            transition: all 0.2s;
+            border: 4px dashed #cbd5e1;
+            background: #f8fafc;
+            border-radius: 1rem;
+        }
+
+        .drop-zone.drag-over {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            transform: scale(1.02);
+        }
+
+        /* Custom for Rocket */
+        .rocket-path {
+            position: relative;
+            width: 100%;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+            overflow-y: auto;
+            height: 100%;
+        }
+
+        .rocket-station {
+            width: 100%;
+            padding: 6px;
+            border-radius: 8px;
+            background: #fef3c7;
+            border: 2px solid #fcd34d;
+            text-align: center;
+            font-weight: bold;
+            color: #b45309;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+        }
+
+        .rocket-station:active {
+            transform: scale(0.95);
+        }
+
+        .rocket-station.completed {
+            background: #fcd34d;
+            color: white;
+            border-color: #d97706;
+        }
+
+        #rocket-ship {
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 2rem;
+        }
+
+        /* Custom for Stones */
+        .stone {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #f3e8ff;
+            border: 3px dashed #c084fc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #7e22ce;
+            font-size: 1.2rem;
+        }
+
+        .stone.filled {
+            background: #d8b4fe;
+            border-style: solid;
+            color: white;
+        }
+    </style>
 </head>
-<body class="min-h-screen text-slate-800 pb-10">
 
-  <div class="fixed top-4 left-0 right-0 z-50 px-4 pointer-events-none">
-    <div class="max-w-4xl mx-auto bg-green-400 border-4 border-green-600 rounded-full px-6 py-3 shadow-xl flex items-center justify-between pointer-events-auto transform hover:scale-[1.01] transition-transform">
-      <div class="flex items-center gap-3">
-        <span class="text-3xl animate-bounce">🔢</span>
-        <span id="info-text" class="text-xl font-bold text-green-900 leading-none mt-1">Menyusun Nombor</span>
-      </div>
-      <button id="speak-btn" onclick="speakInfo()" class="bg-white hover:bg-green-50 text-green-600 border-2 border-green-200 rounded-full p-2 transition-colors shadow-sm">🔊</button>
+<body class="h-screen w-screen overflow-hidden text-slate-800 flex flex-col overscroll-none">
+
+    <div class="flex-none p-4 z-50 pointer-events-none w-full">
+        <div
+            class="max-w-4xl mx-auto bg-green-400 border-4 border-green-600 rounded-full px-4 py-2 shadow-xl flex items-center justify-between pointer-events-auto transform hover:scale-[1.01] transition-transform">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl animate-bounce">🔢</span>
+                <span id="info-text" class="text-lg font-bold text-green-900 leading-none mt-1">Menyusun Nombor</span>
+            </div>
+            <button id="speak-btn" onclick="speakInfo()"
+                class="bg-white hover:bg-green-50 text-green-600 border-2 border-green-200 rounded-full p-2 transition-colors shadow-sm">🔊</button>
+        </div>
     </div>
-  </div>
-  <div class="h-24"></div>
 
-  <div class="max-w-6xl mx-auto p-4">
-    
-    <div class="game-card p-8 mb-8">
-        <div id="activity-content" class="w-full relative z-10 flex flex-col items-center justify-center h-full transition-opacity duration-200 min-h-[500px]">
-            <div class="py-10 text-center">
-                <div class="text-8xl mb-6 animate-pulse">🤖</div>
-                <h2 class="text-5xl font-bold text-emerald-600 mb-4">Jom Susun Nombor!</h2>
-                <p class="text-2xl text-slate-500 mb-8 font-semibold">Pilih aktiviti di bawah untuk mula.</p>
-                <div class="text-4xl animate-bounce">👇</div>
+    <div class="flex-1 w-full max-w-6xl mx-auto p-2 flex flex-col min-h-0">
+
+        <div class="game-card p-4 mb-2 flex-1 w-full">
+            <div id="activity-content"
+                class="w-full relative z-10 flex flex-col items-center justify-center h-full transition-opacity duration-200">
+                <div class="py-10 text-center">
+                    <div class="text-8xl mb-6 animate-pulse">🤖</div>
+                    <h2 class="text-5xl font-bold text-emerald-600 mb-4">Jom Susun Nombor!</h2>
+                    <p class="text-lg text-slate-500 mb-8 font-semibold">Pilih aktiviti di bawah untuk mula.</p>
+                    <div class="text-4xl animate-bounce">👇</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-none bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-2 border-2 border-white">
+            <h3 class="text-lg font-bold text-slate-700 mb-1 text-center">🎮 Pilih Aktiviti</h3>
+
+            <div class="grid grid-cols-5 gap-2 mb-2">
+                <button onclick="loadActivity(1)"
+                    class="btn-3d bg-blue-500 text-white font-bold py-2 px-1 rounded-xl text-xs md:text-sm">🤖<br>Genap</button>
+                <button onclick="loadActivity(2)"
+                    class="btn-3d bg-green-500 text-white font-bold py-2 px-1 rounded-xl text-xs md:text-sm">👹<br>Ganjil</button>
+                <button onclick="loadActivity(3)"
+                    class="btn-3d bg-purple-500 text-white font-bold py-2 px-1 rounded-xl text-xs md:text-sm">🌸<br>Lima</button>
+                <button onclick="loadActivity(4)"
+                    class="btn-3d bg-orange-500 text-white font-bold py-2 px-1 rounded-xl text-xs md:text-sm">🚀<br>Roket</button>
+                <button onclick="loadActivity(5)"
+                    class="btn-3d bg-pink-500 text-white font-bold py-2 px-1 rounded-xl text-xs md:text-sm">🎲<br>Teroka</button>
+            </div>
+
+            <div class="flex justify-center gap-4 border-t-2 border-slate-100 pt-2">
+                <button onclick="clearActivity()"
+                    class="btn-3d bg-slate-400 text-white font-bold py-1 px-4 rounded-full text-base">🏠 Menu</button>
+                <button onclick="nextActivity()"
+                    class="btn-3d bg-indigo-500 text-white font-bold py-1 px-6 rounded-full text-lg">Seterusnya
+                    ➡️</button>
             </div>
         </div>
     </div>
 
-    <div class="bg-white/80 backdrop-blur-sm rounded-3xl shadow-lg p-6 border-2 border-white">
-      <h3 class="text-2xl font-bold text-slate-700 mb-4 text-center">🎮 Pilih Aktiviti</h3>
-      
-      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
-        <button onclick="loadActivity(1)" class="btn-3d bg-blue-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🤖 Genap</button>
-        <button onclick="loadActivity(2)" class="btn-3d bg-green-500 text-white font-bold py-4 px-2 rounded-xl text-lg">👹 Ganjil</button>
-        <button onclick="loadActivity(3)" class="btn-3d bg-purple-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🌸 Lima-Lima</button>
-        <button onclick="loadActivity(4)" class="btn-3d bg-orange-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🚀 Roket</button>
-        <button onclick="loadActivity(5)" class="btn-3d bg-pink-500 text-white font-bold py-4 px-2 rounded-xl text-lg">🎲 Teroka</button>
-      </div>
+    <script>
+        /* --- STANDARD HELPERS --- */
+        let currentActivity = 0;
+        let ttsEnabled = false;
+        let currentInfo = "Pilih aktiviti untuk mula belajar nombor!";
+        let draggedItem = null;
 
-      <div class="flex justify-center gap-4 border-t-2 border-slate-100 pt-6">
-        <button onclick="clearActivity()" class="btn-3d bg-slate-400 text-white font-bold py-2 px-6 rounded-full text-lg">🏠 Menu</button>
-        <button onclick="nextActivity()" class="btn-3d bg-indigo-500 text-white font-bold py-2 px-8 rounded-full text-xl">Seterusnya ➡️</button>
-      </div>
-    </div>
-  </div>
+        function speak(text) {
+            if (!ttsEnabled || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text); u.lang = 'ms-MY'; u.rate = 0.95; u.pitch = 1.05;
+            const ms = window.speechSynthesis.getVoices().find(v => v.lang === 'ms-MY' || v.lang?.startsWith('ms'));
+            if (ms) u.voice = ms;
+            window.speechSynthesis.speak(u);
+        }
 
-  <script>
-    /* --- STANDARD HELPERS --- */
-    let currentActivity = 0;
-    let ttsEnabled = false;
-    let currentInfo = "Pilih aktiviti untuk mula belajar nombor!";
-    let draggedItem = null;
-    
-    function speak(text) { 
-        if (!ttsEnabled || !('speechSynthesis' in window)) return; 
-        window.speechSynthesis.cancel(); 
-        const u = new SpeechSynthesisUtterance(text); u.lang = 'ms-MY'; u.rate = 0.95; u.pitch = 1.05; 
-        const ms = window.speechSynthesis.getVoices().find(v => v.lang === 'ms-MY' || v.lang?.startsWith('ms')); 
-        if (ms) u.voice = ms; 
-        window.speechSynthesis.speak(u); 
-    }
-    
-    function setInfo(text) { 
-        currentInfo = text; const infoEl = document.getElementById('info-text'); 
-        infoEl.style.opacity = 0; setTimeout(() => { infoEl.textContent = text; infoEl.style.opacity = 1; }, 200); 
-    }
-    
-    function speakInfo() { 
-        if (!ttsEnabled) { ttsEnabled = true; document.getElementById('speak-btn').classList.add('bg-green-100', 'text-green-600'); } 
-        speak(currentInfo); 
-    }
+        function setInfo(text) {
+            currentInfo = text; const infoEl = document.getElementById('info-text');
+            infoEl.style.opacity = 0; setTimeout(() => { infoEl.textContent = text; infoEl.style.opacity = 1; }, 200);
+        }
 
-    function triggerWin() { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
+        function speakInfo() {
+            if (!ttsEnabled) { ttsEnabled = true; document.getElementById('speak-btn').classList.add('bg-green-100', 'text-green-600'); }
+            speak(currentInfo);
+        }
 
-    /* --- DnD Globals --- */
-    window.dragStart = function(e) { draggedItem = e.target; e.target.classList.add('opacity-50'); e.dataTransfer.setData('val', e.target.dataset.val); }
-    window.dragEnd = function(e) { e.target.classList.remove('opacity-50'); draggedItem = null; }
-    window.allowDrop = function(e) { e.preventDefault(); if (e.currentTarget.classList.contains('drop-zone')) e.currentTarget.classList.add('drag-over'); }
-    window.dragLeave = function(e) { if (e.currentTarget.classList.contains('drop-zone')) e.currentTarget.classList.remove('drag-over'); }
+        function triggerWin() { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); }
 
-    /* --- ROUTER --- */
-    function loadActivity(n) {
-      currentActivity = n;
-      const content = document.getElementById('activity-content');
-      content.style.opacity = 0;
-      setTimeout(() => {
-          if (n === 1) setupSorter(content, 'genap');
-          else if (n === 2) setupSorter(content, 'ganjil');
-          else if (n === 3) setupFivePattern(content);
-          else if (n === 4) setupRocket(content);
-          else if (n === 5) setupExplore(content);
-          content.style.opacity = 1; 
-      }, 200);
-    }
+        /* --- DnD Globals --- */
+        window.dragStart = function (e) { draggedItem = e.target; e.target.classList.add('opacity-50'); e.dataTransfer.setData('val', e.target.dataset.val); }
+        window.dragEnd = function (e) { e.target.classList.remove('opacity-50'); draggedItem = null; }
+        window.allowDrop = function (e) { e.preventDefault(); if (e.currentTarget.classList.contains('drop-zone')) e.currentTarget.classList.add('drag-over'); }
+        window.dragLeave = function (e) { if (e.currentTarget.classList.contains('drop-zone')) e.currentTarget.classList.remove('drag-over'); }
 
-    function clearActivity() {
-        currentActivity = 0;
-        document.getElementById('activity-content').innerHTML = `<div class="py-10 text-center"><div class="text-8xl mb-6 animate-pulse">🤖</div><h2 class="text-5xl font-bold text-emerald-600 mb-4">Jom Susun Nombor!</h2><p class="text-2xl text-slate-500 mb-8 font-semibold">Pilih butang di bawah.</p></div>`;
-        setInfo("Pilih aktiviti di bawah.");
-    }
-    function nextActivity() { let next = currentActivity + 1; if (next > 5) next = 1; loadActivity(next); }
+        /* --- ROUTER --- */
+        function loadActivity(n) {
+            currentActivity = n;
+            const content = document.getElementById('activity-content');
+            content.style.opacity = 0;
+            setTimeout(() => {
+                if (n === 1) setupSorter(content, 'genap');
+                else if (n === 2) setupSorter(content, 'ganjil');
+                else if (n === 3) setupFivePattern(content);
+                else if (n === 4) setupRocket(content);
+                else if (n === 5) setupExplore(content);
+                content.style.opacity = 1;
+            }, 200);
+        }
+
+        function clearActivity() {
+            currentActivity = 0;
+            document.getElementById('activity-content').innerHTML = `<div class="py-10 text-center"><div class="text-8xl mb-6 animate-pulse">🤖</div><h2 class="text-5xl font-bold text-emerald-600 mb-4">Jom Susun Nombor!</h2><p class="text-2xl text-slate-500 mb-8 font-semibold">Pilih butang di bawah.</p></div>`;
+            setInfo("Pilih aktiviti di bawah.");
+        }
+        function nextActivity() { let next = currentActivity + 1; if (next > 5) next = 1; loadActivity(next); }
 
 
-    /* =========================================
-       LOGIK AKTIVITI
-       ========================================= */
+        /* =========================================
+           LOGIK AKTIVITI
+           ========================================= */
 
-    /* --- 1 & 2. Asing Nombor (Genap / Ganjil) --- */
-    function setupSorter(content, type) {
-        const isEven = type === 'genap';
-        const title = isEven ? "🤖 Asing Nombor Genap" : "👹 Asing Nombor Ganjil";
-        const color = isEven ? "blue" : "green";
-        const numbers = [2,5,8,11,14,17,20,23].sort(()=>Math.random()-0.5);
-        
-        setInfo(`Masukkan nombor ${type.toUpperCase()} ke dalam bakul.`);
+        /* --- 1 & 2. Asing Nombor (Genap / Ganjil) --- */
+        function setupSorter(content, type) {
+            const isEven = type === 'genap';
+            const title = isEven ? "🤖 Asing Nombor Genap" : "👹 Asing Nombor Ganjil";
+            const color = isEven ? "blue" : "green";
+            const numbers = [2, 5, 8, 11, 14, 17, 20, 23].sort(() => Math.random() - 0.5);
 
-        content.innerHTML = `
-            <div class="w-full max-w-5xl text-center">
-                <h3 class="text-3xl font-bold text-${color}-600 mb-6">${title}</h3>
+            setInfo(`Masukkan nombor ${type.toUpperCase()} ke dalam bakul.`);
+
+            content.innerHTML = `
+            <div class="w-full max-w-5xl text-center flex flex-col h-full overflow-hidden">
+                <h3 class="text-2xl font-bold text-${color}-600 mb-2 flex-none">${title}</h3>
                 
-                <div id="conveyor" class="bg-slate-100 p-4 rounded-2xl border-2 border-slate-200 flex flex-wrap justify-center gap-4 mb-10 min-h-[100px]">
+                <div id="conveyor" class="bg-slate-100 p-2 rounded-2xl border-2 border-slate-200 flex flex-wrap justify-center gap-2 mb-2 min-h-[80px] flex-none">
                     ${numbers.map(n => `
                         <div draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-val="${n}"
-                             class="draggable btn-3d bg-white border-slate-300 text-slate-700 w-16 h-16 rounded-xl flex items-center justify-center text-2xl font-bold">
+                             class="draggable btn-3d bg-white border-slate-300 text-slate-700 w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold">
                             ${n}
                         </div>
                     `).join('')}
                 </div>
-                
-                
 
-[Image of sorting bins]
-
-
-                <div class="grid grid-cols-2 gap-8">
-                    <div class="drop-zone min-h-[250px] flex flex-col items-center justify-center gap-2 bg-blue-50 border-blue-300"
+                <div class="grid grid-cols-2 gap-4 flex-1 min-h-0">
+                    <div class="drop-zone p-2 flex flex-col items-center justify-start gap-2 bg-blue-50 border-blue-300 overflow-y-auto"
                          ondrop="dropSorter(event, 'genap')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                        <span class="text-6xl">🤖</span>
-                        <span class="text-xl font-black text-blue-700 uppercase">Genap</span>
+                        <span class="text-4xl">🤖</span>
+                        <span class="text-lg font-black text-blue-700 uppercase">Genap</span>
                     </div>
-                    <div class="drop-zone min-h-[250px] flex flex-col items-center justify-center gap-2 bg-green-50 border-green-300"
+                    <div class="drop-zone p-2 flex flex-col items-center justify-start gap-2 bg-green-50 border-green-300 overflow-y-auto"
                          ondrop="dropSorter(event, 'ganjil')" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">
-                        <span class="text-6xl">👹</span>
-                        <span class="text-xl font-black text-green-700 uppercase">Ganjil</span>
+                        <span class="text-4xl">👹</span>
+                        <span class="text-lg font-black text-green-700 uppercase">Ganjil</span>
                     </div>
                 </div>
             </div>
         `;
-    }
-
-    window.dropSorter = function(e, binType) {
-        e.preventDefault(); e.currentTarget.classList.remove('drag-over');
-        if(!draggedItem) return;
-        
-        const val = parseInt(draggedItem.dataset.val);
-        const isNumEven = val % 2 === 0;
-        const isCorrect = (binType === 'genap' && isNumEven) || (binType === 'ganjil' && !isNumEven);
-
-        if(isCorrect) {
-            draggedItem.style.display = 'none';
-            speak(`Betul! ${val} ialah ${binType}.`);
-            
-            // Visual feedback in bin
-            const chip = document.createElement('div');
-            chip.className = "w-12 h-12 bg-white rounded-full border-2 flex items-center justify-center font-bold text-sm pop-in mb-1";
-            chip.innerText = val;
-            chip.style.borderColor = binType === 'genap' ? '#3b82f6' : '#22c55e';
-            e.currentTarget.appendChild(chip);
-
-            if(document.querySelectorAll('#conveyor .draggable:not([style*="none"])').length === 0) {
-                setTimeout(()=>{ speak("Semua nombor selesai!"); triggerWin(); }, 500);
-            }
-        } else {
-            speak(`Salah. ${val} bukan ${binType}.`);
-            draggedItem.classList.add('shake');
-            setTimeout(()=>draggedItem.classList.remove('shake'), 500);
         }
-    }
 
-    /* --- 3. Lima-Lima (Stones) --- */
-    let patternState = { next: 5 };
-    
-    function setupFivePattern(content) {
-        patternState = { next: 5 };
-        const targets = [5, 10, 15, 20, 25];
-        const distractors = [12, 18, 23];
-        const pool = [...targets, ...distractors].sort(()=>Math.random()-0.5);
-        
-        setInfo("Susun gandaan 5 ikut urutan (5, 10, 15...).");
+        window.dropSorter = function (e, binType) {
+            e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+            if (!draggedItem) return;
 
-        content.innerHTML = `
-            <div class="w-full max-w-5xl text-center">
-                <h3 class="text-3xl font-bold text-purple-600 mb-6">🌸 Lompat Atas Bunga (Gandaan 5)</h3>
+            const val = parseInt(draggedItem.dataset.val);
+            const isNumEven = val % 2 === 0;
+            const isCorrect = (binType === 'genap' && isNumEven) || (binType === 'ganjil' && !isNumEven);
+
+            if (isCorrect) {
+                draggedItem.style.display = 'none';
+                speak(`Betul! ${val} ialah ${binType}.`);
+
+                // Visual feedback in bin
+                const chip = document.createElement('div');
+                chip.className = "w-12 h-12 bg-white rounded-full border-2 flex items-center justify-center font-bold text-sm pop-in mb-1";
+                chip.innerText = val;
+                chip.style.borderColor = binType === 'genap' ? '#3b82f6' : '#22c55e';
+                e.currentTarget.appendChild(chip);
+
+                if (document.querySelectorAll('#conveyor .draggable:not([style*="none"])').length === 0) {
+                    setTimeout(() => { speak("Semua nombor selesai!"); triggerWin(); }, 500);
+                }
+            } else {
+                speak(`Salah. ${val} bukan ${binType}.`);
+                draggedItem.classList.add('shake');
+                setTimeout(() => draggedItem.classList.remove('shake'), 500);
+            }
+        }
+
+        /* --- 3. Lima-Lima (Stones) --- */
+        let patternState = { next: 5 };
+
+        function setupFivePattern(content) {
+            patternState = { next: 5 };
+            const targets = [5, 10, 15, 20, 25];
+            const distractors = [12, 18, 23];
+            const pool = [...targets, ...distractors].sort(() => Math.random() - 0.5);
+
+            setInfo("Susun gandaan 5 ikut urutan (5, 10, 15...).");
+
+            content.innerHTML = `
+            <div class="w-full max-w-5xl text-center flex flex-col h-full overflow-hidden">
+                <h3 class="text-2xl font-bold text-purple-600 mb-2 flex-none">🌸 Lompat Atas Bunga (Gandaan 5)</h3>
                 
-                <div class="bg-purple-50 p-4 rounded-2xl border-2 border-purple-200 flex flex-wrap justify-center gap-4 mb-10">
+                <div class="bg-purple-50 p-2 rounded-2xl border-2 border-purple-200 flex flex-wrap justify-center gap-2 mb-2 flex-none">
                     ${pool.map(n => `
                         <div draggable="true" ondragstart="dragStart(event)" ondragend="dragEnd(event)" data-val="${n}"
-                             class="draggable btn-3d bg-white border-purple-300 text-purple-800 w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold">
+                             class="draggable btn-3d bg-white border-purple-300 text-purple-800 w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold">
                             ${n}
                         </div>
                     `).join('')}
                 </div>
 
-                <div class="flex flex-wrap justify-center gap-4 md:gap-8 items-center relative">
-                    <div class="absolute top-1/2 left-0 right-0 h-2 bg-purple-200 -z-10 rounded-full"></div>
+                <div class="flex flex-wrap justify-center gap-2 md:gap-4 items-center relative flex-1 content-start overflow-y-auto">
+                    <div class="absolute top-1/2 left-0 right-0 h-2 bg-purple-200 -z-10 rounded-full hidden md:block"></div>
                     ${targets.map(n => `
                         <div class="stone drop-zone" data-target="${n}"
                              ondrop="dropStone(event)" ondragover="allowDrop(event)" ondragleave="dragLeave(event)">?</div>
@@ -282,134 +406,132 @@
                 </div>
             </div>
         `;
-    }
-
-    window.dropStone = function(e, target) {
-        e.preventDefault(); e.currentTarget.classList.remove('drag-over');
-        if(!draggedItem) return;
-        
-        const val = parseInt(draggedItem.dataset.val);
-        const targetVal = parseInt(e.currentTarget.dataset.target);
-
-        if(val === targetVal && val === patternState.next) {
-            e.currentTarget.innerHTML = val;
-            e.currentTarget.classList.remove('drop-zone');
-            e.currentTarget.classList.add('filled', 'pop-in');
-            e.currentTarget.removeAttribute('ondrop');
-            draggedItem.style.display = 'none';
-            
-            patternState.next += 5;
-            speak(val.toString());
-
-            if(val === 25) {
-                setTimeout(()=>{ speak("Laluan lengkap!"); triggerWin(); }, 500);
-            } else {
-                setInfo(`Cari nombor ${patternState.next}.`);
-            }
-        } else {
-            if(val !== targetVal) speak("Salah tempat.");
-            else speak(`Ikut urutan. Cari ${patternState.next} dulu.`);
-            
-            draggedItem.classList.add('shake');
-            setTimeout(()=>draggedItem.classList.remove('shake'), 500);
         }
-    }
 
-    /* --- 4. Roket Sepuluh (Interactive Click) --- */
-    let rocketStep = 10;
-    
-    function setupRocket(content) {
-        rocketStep = 10;
-        const stations = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10]; // Render reversed visually
-        
-        setInfo("Klik stesen 10, 20, 30... untuk terbangkan roket!");
+        window.dropStone = function (e, target) {
+            e.preventDefault(); e.currentTarget.classList.remove('drag-over');
+            if (!draggedItem) return;
 
-        content.innerHTML = `
-            <div class="w-full max-w-md mx-auto text-center relative h-[600px]">
-                <h3 class="text-3xl font-bold text-orange-600 mb-4">🚀 Roket Sepuluh</h3>
+            const val = parseInt(draggedItem.dataset.val);
+            const targetVal = parseInt(e.currentTarget.dataset.target);
+
+            if (val === targetVal && val === patternState.next) {
+                e.currentTarget.innerHTML = val;
+                e.currentTarget.classList.remove('drop-zone');
+                e.currentTarget.classList.add('filled', 'pop-in');
+                e.currentTarget.removeAttribute('ondrop');
+                draggedItem.style.display = 'none';
+
+                patternState.next += 5;
+                speak(val.toString());
+
+                if (val === 25) {
+                    setTimeout(() => { speak("Laluan lengkap!"); triggerWin(); }, 500);
+                } else {
+                    setInfo(`Cari nombor ${patternState.next}.`);
+                }
+            } else {
+                if (val !== targetVal) speak("Salah tempat.");
+                else speak(`Ikut urutan. Cari ${patternState.next} dulu.`);
+
+                draggedItem.classList.add('shake');
+                setTimeout(() => draggedItem.classList.remove('shake'), 500);
+            }
+        }
+
+        /* --- 4. Roket Sepuluh (Interactive Click) --- */
+        let rocketStep = 10;
+
+        function setupRocket(content) {
+            rocketStep = 10;
+            const stations = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10]; // Render reversed visually
+
+            setInfo("Klik stesen 10, 20, 30... untuk terbangkan roket!");
+
+            content.innerHTML = `
+            <div class="w-full max-w-md mx-auto text-center relative h-full flex flex-col overflow-hidden">
+                <h3 class="text-2xl font-bold text-orange-600 mb-2 flex-none">🚀 Roket Sepuluh</h3>
                 
-                
-
-[Image of rocket launch pad]
-
-
-                <div class="rocket-path mx-auto bg-orange-50 p-4 rounded-3xl border-2 border-orange-200 h-full justify-end">
-                    ${stations.map(n => `
-                        <div class="rocket-station" id="st-${n}" onclick="clickStation(${n})">
-                            ${n === 100 ? '🌕 100' : n}
-                        </div>
-                    `).join('')}
-                    
-                    <div id="rocket-ship" class="text-6xl absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 transition-all duration-500">🚀</div>
+                <div class="rocket-path mx-auto bg-orange-50 p-2 rounded-3xl border-2 border-orange-200 flex-1 min-h-0 w-full justify-end overflow-y-auto relative">
+                     <div class="flex flex-col-reverse gap-2 w-full pb-10">
+                        ${stations.map(n => `
+                            <div class="rocket-station" id="st-${n}" onclick="clickStation(${n})">
+                                ${n === 100 ? '🌕 100' : n}
+                            </div>
+                        `).join('')}
+                    </div>
                 </div>
+                <!-- Rocket element handled via JS/CSS overlay or separate layer, but simplified here to avoid layout break -->
+                <div id="rocket-ship" class="text-4xl absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 transition-all duration-500 pointer-events-none">🚀</div>
             </div>
         `;
-    }
-
-    window.clickStation = function(val) {
-        if(val === rocketStep) {
-            const btn = document.getElementById(`st-${val}`);
-            btn.classList.add('completed');
-            
-            // Move Rocket
-            const rocket = document.getElementById('rocket-ship');
-            const stepHeight = 46; // Approximate height of station + gap
-            const stepsTaken = val / 10;
-            rocket.style.transform = `translate(-50%, -${stepsTaken * stepHeight}px)`;
-            
-            speak(val.toString());
-            rocketStep += 10;
-
-            if(val === 100) {
-                setInfo("Roket sampai ke bulan!");
-                triggerWin();
-                speak("Berjaya mendarat!");
-            }
-        } else if (val > rocketStep) {
-            speak(`Klik ${rocketStep} dahulu.`);
-            const btn = document.getElementById(`st-${val}`);
-            btn.classList.add('shake');
-            setTimeout(()=>btn.classList.remove('shake'), 300);
         }
-    }
 
-    /* --- 5. Teroka Urutan --- */
-    function setupExplore(content) {
-        setInfo("Klik kad untuk belajar pola nombor.");
-        const items = [
-            {seq:"5, 10, ?, 20", ans:15, desc:"Tambah 5 setiap langkah."},
-            {seq:"2, 4, 6, ?", ans:8, desc:"Nombor genap, tambah 2."},
-            {seq:"10, 20, 30, ?", ans:40, desc:"Gandaan sepuluh."},
-            {seq:"1, 3, 5, ?", ans:7, desc:"Nombor ganjil, selang satu."}
-        ];
+        window.clickStation = function (val) {
+            if (val === rocketStep) {
+                const btn = document.getElementById(`st-${val}`);
+                btn.classList.add('completed');
 
-        content.innerHTML = `
-            <div class="w-full max-w-5xl text-center">
-                <h3 class="text-3xl font-bold text-pink-600 mb-8">🎲 Teroka Urutan</h3>
+                // Move Rocket
+                const rocket = document.getElementById('rocket-ship');
+                const stepHeight = 46; // Approximate height of station + gap
+                const stepsTaken = val / 10;
+                rocket.style.transform = `translate(-50%, -${stepsTaken * stepHeight}px)`;
+
+                speak(val.toString());
+                rocketStep += 10;
+
+                if (val === 100) {
+                    setInfo("Roket sampai ke bulan!");
+                    triggerWin();
+                    speak("Berjaya mendarat!");
+                }
+            } else if (val > rocketStep) {
+                speak(`Klik ${rocketStep} dahulu.`);
+                const btn = document.getElementById(`st-${val}`);
+                btn.classList.add('shake');
+                setTimeout(() => btn.classList.remove('shake'), 300);
+            }
+        }
+
+        /* --- 5. Teroka Urutan --- */
+        function setupExplore(content) {
+            setInfo("Klik kad untuk belajar pola nombor.");
+            const items = [
+                { seq: "5, 10, ?, 20", ans: 15, desc: "Tambah 5 setiap langkah." },
+                { seq: "2, 4, 6, ?", ans: 8, desc: "Nombor genap, tambah 2." },
+                { seq: "10, 20, 30, ?", ans: 40, desc: "Gandaan sepuluh." },
+                { seq: "1, 3, 5, ?", ans: 7, desc: "Nombor ganjil, selang satu." }
+            ];
+
+            content.innerHTML = `
+            <div class="w-full max-w-5xl text-center flex flex-col h-full overflow-y-auto">
+                <h3 class="text-2xl font-bold text-pink-600 mb-4 flex-none">🎲 Teroka Urutan</h3>
                 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 gap-4 flex-1 min-h-0">
                     ${items.map(item => `
-                        <button onclick="explainSeq(this, '${item.desc}', ${item.ans})" class="btn-3d bg-white border-pink-300 text-slate-700 p-6 rounded-2xl flex flex-col items-center gap-3 group hover:bg-pink-50 w-full">
-                            <div class="text-2xl font-bold text-pink-800">${item.seq}</div>
+                        <button onclick="explainSeq(this, '${item.desc}', ${item.ans})" class="btn-3d bg-white border-pink-300 text-slate-700 p-4 rounded-2xl flex flex-col items-center gap-2 group hover:bg-pink-50 w-full">
+                            <div class="text-xl font-bold text-pink-800">${item.seq}</div>
                             <div class="w-full h-1 bg-pink-100 rounded-full"></div>
-                            <div class="text-4xl font-black text-pink-500 group-hover:scale-110 transition-transform">?</div>
+                            <div class="text-3xl font-black text-pink-500 group-hover:scale-110 transition-transform">?</div>
                         </button>
                     `).join('')}
                 </div>
             </div>
         `;
-    }
+        }
 
-    window.explainSeq = function(btn, desc, ans) {
-        // Reveal answer visually
-        const ansEl = btn.querySelector('.text-4xl');
-        ansEl.innerText = ans;
-        ansEl.classList.add('text-green-500', 'pop-in');
-        
-        speak(`${ans}. ${desc}`);
-        setInfo(desc);
-    }
+        window.explainSeq = function (btn, desc, ans) {
+            // Reveal answer visually
+            const ansEl = btn.querySelector('.text-4xl');
+            ansEl.innerText = ans;
+            ansEl.classList.add('text-green-500', 'pop-in');
 
-  </script>
+            speak(`${ans}. ${desc}`);
+            setInfo(desc);
+        }
+
+    </script>
 </body>
+
 </html>
